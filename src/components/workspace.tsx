@@ -13,11 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { AddFootage } from "@/components/add-footage";
 import { SourceMap } from "@/components/source-map";
 import { formatTimecode, type Observation, type RouteNote, type Source } from "@/lib/retrieve";
 
 type CatalogSource = Source & {
-  videoUrl: string;
+  videoUrl: string | null;
   poster: string | null;
   frameCount: number;
 };
@@ -77,20 +78,21 @@ export function Workspace() {
   const inputRef = useRef<HTMLInputElement>(null);
   const request = useRef(0);
 
-  useEffect(() => {
-    let cancelled = false;
+  function reloadCatalog() {
     fetch("/api/catalog")
       .then(async (response) => {
         const body = await response.json();
         if (!response.ok) throw new Error(body.error || "Could not load the archive.");
-        if (!cancelled) setCatalog(body);
+        setCatalog(body);
+        setCatalogError(null);
       })
       .catch((error: unknown) => {
-        if (!cancelled) setCatalogError(error instanceof Error ? error.message : "Could not load the archive.");
+        setCatalogError(error instanceof Error ? error.message : "Could not load the archive.");
       });
-    return () => {
-      cancelled = true;
-    };
+  }
+
+  useEffect(() => {
+    reloadCatalog();
   }, []);
 
   useEffect(() => {
@@ -202,6 +204,12 @@ export function Workspace() {
               );
             })}
           </ul>
+          <details className="mt-3 border-t border-border pt-2">
+            <summary className="cursor-pointer px-2 text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
+              Add footage or camera
+            </summary>
+            <AddFootage onAdded={reloadCatalog} />
+          </details>
         </div>
         <div className="border-t border-border px-5 py-4 pb-6 text-[11px] leading-5 text-muted-foreground">
           Local CLIP retrieval. VAST DataEngine and NVIDIA VSS are not connected.
@@ -378,6 +386,10 @@ export function Workspace() {
             <p className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">Inspection</p>
             {videoSrc ? (
               <Player src={videoSrc} seekTo={seekTo} />
+            ) : active?.poster ? (
+              // Live cameras expose the latest sampled frame. Browsers do not play RTSP.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={active.poster} alt="" className="mt-3 aspect-video w-full rounded-lg object-cover" />
             ) : (
               <div className="mt-3 flex aspect-video items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
                 Select a source or a result

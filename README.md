@@ -20,6 +20,12 @@ Open [http://127.0.0.1:43123](http://127.0.0.1:43123).
 
 `npm run index` writes `data/index.json` and `public/thumbs/`. The committed index is enough to search after the text encoder has been downloaded, which happens on the first query. Re-run the indexer if you change `data/sources.json` or the sample files.
 
+## Add footage or a live camera
+
+The sidebar accepts an mp4, webm, mov, or mkv. Tracepoint samples it, embeds the frames with the same CLIP model, and adds it to search. A capture clock or coordinates are stored only when the file tag or the person uploading the file supplies them. Operator-entered coordinates are labeled as such.
+
+A live NVR or street camera uses an `rtsp://`, `rtsps://`, `http://`, or `https://` URL. The first frame has to open before the camera is saved. After that, a frame is sampled every 5 seconds. Passwords in the URL stay in `data/added-sources.json` on this machine and are not shown in the interface. Browsers cannot play RTSP, so inspection shows the latest sampled frame.
+
 ```bash
 npm test
 ```

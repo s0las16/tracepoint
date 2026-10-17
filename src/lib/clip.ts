@@ -6,8 +6,14 @@ type TextEncoder = {
   model: (inputs: unknown) => Promise<{ text_embeds?: { tolist: () => number[][] } }>;
 };
 
+type VisionEncoder = {
+  processor: (image: unknown) => Promise<unknown>;
+  model: (inputs: unknown) => Promise<{ image_embeds?: { tolist: () => number[][] } }>;
+};
+
 const globalStore = globalThis as typeof globalThis & {
   __tracepointText?: Promise<TextEncoder>;
+  __tracepointVision?: Promise<VisionEncoder>;
 };
 
 export async function embedQuery(text: string): Promise<number[]> {
@@ -17,6 +23,38 @@ export async function embedQuery(text: string): Promise<number[]> {
   const row = output.text_embeds?.tolist()?.[0];
   if (!row?.length) throw new Error("CLIP text encoder returned no embedding.");
   return l2(row.map((value) => Number(value)));
+}
+
+export async function embedImage(imagePath: string): Promise<number[]> {
+  const { RawImage } = await import("@huggingface/transformers");
+  const vision = await getVisionEncoder();
+  const image = await RawImage.read(imagePath);
+  const inputs = await vision.processor(image);
+  const output = await vision.model(inputs);
+  const row = output.image_embeds?.tolist()?.[0];
+  if (!row?.length) throw new Error("CLIP vision encoder returned no embedding.");
+  return l2(row.map((value) => Number(value))).map((value) => Math.round(value * 1e6) / 1e6);
+}
+
+async function getVisionEncoder(): Promise<VisionEncoder> {
+  if (!globalStore.__tracepointVision) {
+    globalStore.__tracepointVision = loadVisionEncoder();
+  }
+  return globalStore.__tracepointVision;
+}
+
+async function loadVisionEncoder(): Promise<VisionEncoder> {
+  const { env, AutoProcessor, CLIPVisionModelWithProjection } = await import("@huggingface/transformers");
+  env.cacheDir = path.join(process.cwd(), ".cache", "huggingface");
+  const processor = await AutoProcessor.from_pretrained(CLIP_MODEL);
+  const model = await CLIPVisionModelWithProjection.from_pretrained(CLIP_MODEL, {
+    dtype: CLIP_DTYPE,
+    device: "cpu",
+  });
+  return {
+    processor: (image) => processor(image),
+    model: (inputs) => model(inputs),
+  };
 }
 
 async function getTextEncoder(): Promise<TextEncoder> {

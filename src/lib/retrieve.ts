@@ -26,6 +26,11 @@ export type Source = {
   trimStartSec: number;
   durationSec: number;
   audioRemoved: boolean;
+  origin?: "commons" | "upload" | "live";
+  videoUrl?: string | null;
+  streamUrl?: string;
+  streamRedacted?: string | null;
+  liveStatus?: string | null;
 };
 
 export type FrameRecord = {

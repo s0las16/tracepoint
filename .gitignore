@@ -34,8 +34,12 @@ yarn-error.log*
 .env*
 !.env.example
 
-# model cache and secrets
+# model cache, uploads, and camera URLs
 .cache/
+/data/added-sources.json
+/data/added-index.json
+/public/uploads/
+/public/added-thumbs/
 *.key
 credentials.json
 secrets.*
