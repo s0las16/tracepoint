@@ -18,6 +18,8 @@ npm run dev
 
 Open [http://127.0.0.1:43123](http://127.0.0.1:43123).
 
+On the lab VM the same app is started with `scripts/host-on-vm.sh`. That also opens a temporary public `trycloudflare.com` address. The address changes if the tunnel process restarts.
+
 `npm run index` writes `data/index.json` and `public/thumbs/`. The committed index is enough to search after the text encoder has been downloaded, which happens on the first query. Re-run the indexer if you change `data/sources.json` or the sample files.
 
 ## Add footage or a live camera
