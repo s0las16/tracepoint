@@ -152,6 +152,11 @@ export async function ingestUpload(input: {
   label: string;
   cameraId?: string;
   capturedAt?: string;
+  description?: string;
+  captureNote?: string;
+  pageUrl?: string;
+  license?: string;
+  artist?: string;
   lat?: number | null;
   lon?: number | null;
 }): Promise<Source> {
@@ -167,8 +172,8 @@ export async function ingestUpload(input: {
 
     const probed = await probeVideo(absolute);
     const fileClock = clockFromFileTag(probed.creationTime);
-    const operatorClock = input.capturedAt?.trim() || null;
-    const capturedAt = fileClock?.capturedAt ?? operatorClock;
+    const givenClock = input.capturedAt?.trim() || null;
+    const capturedAt = givenClock || fileClock?.capturedAt || null;
     const capturePrecision = capturedAt && /\d{2}:\d{2}/.test(capturedAt) ? "datetime" : capturedAt ? "date" : "none";
     const thumbDir = path.join(process.cwd(), "public", "added-thumbs", id);
     const names = await sampleFrames(absolute, thumbDir);
@@ -184,22 +189,26 @@ export async function ingestUpload(input: {
       cameraId: id,
       label: input.label.trim(),
       title: input.label.trim(),
-      description: "Uploaded on this machine. Tracepoint sampled frames and embedded them with CLIP. The description is the label entered with the file.",
+      description:
+        input.description?.trim() ||
+        "Uploaded on this machine. Tracepoint sampled frames and embedded them with CLIP.",
       file: relative.split(path.sep).join("/"),
       videoUrl: `/${relative.split(path.sep).join("/")}`,
-      pageUrl: "",
+      pageUrl: input.pageUrl?.trim() || "",
       originalUrl: "",
       originalTitle: path.basename(input.filename),
-      license: "Uploaded locally",
+      license: input.license?.trim() || "Uploaded locally",
       licenseUrl: "",
-      artist: "Uploaded on this machine",
+      artist: input.artist?.trim() || "Uploaded on this machine",
       capturedAt,
       capturePrecision,
-      captureNote: fileClock
-        ? fileClock.note
-        : operatorClock
-          ? "Clock typed in with the upload. It was not read from the file."
-          : "No capture clock was in the file, and none was entered.",
+      captureNote:
+        input.captureNote?.trim() ||
+        (givenClock
+          ? "Clock supplied with the upload. It was not read from the file."
+          : fileClock
+            ? fileClock.note
+            : "No capture clock was in the file, and none was entered."),
       lat: coords?.lat ?? null,
       lon: coords?.lon ?? null,
       coordinateSource: coords ? "Entered by the operator. Not read from the file." : null,

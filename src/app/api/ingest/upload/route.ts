@@ -32,6 +32,11 @@ export async function POST(request: Request) {
       label,
       cameraId: String(form.get("cameraId") ?? ""),
       capturedAt: String(form.get("capturedAt") ?? ""),
+      description: String(form.get("description") ?? ""),
+      captureNote: String(form.get("captureNote") ?? ""),
+      pageUrl: String(form.get("pageUrl") ?? ""),
+      license: String(form.get("license") ?? ""),
+      artist: String(form.get("artist") ?? ""),
       lat: numberOrNull(form.get("lat")),
       lon: numberOrNull(form.get("lon")),
     });
